@@ -15,63 +15,111 @@
             --primary-light: #3a5ca0;
             --primary-dark: #1a3670;
             --primary-bg: #eef1f8;
+            --scrollbar-bg: #d1d9e6;
+            --scrollbar-thumb: #234889;
+            --scrollbar-thumb-hover: #3a5ca0;
         }
         
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--primary-bg);
+        html, body {
+            height: 100%;
             margin: 0;
             padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--primary-bg);
         }
         
         #viewerContainer {
             position: relative;
-            overflow: hidden;
             background-color: #ffffff;
             box-shadow: 0 10px 25px rgba(35, 72, 137, 0.15);
             border-radius: 12px;
             height: 100%;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
         
         #pdfContainer {
-            overflow-y: auto;
+            overflow-y: scroll; /* Immer Scrollbar anzeigen */
             background-color: var(--primary-bg);
             flex-grow: 1;
-            /* Scrollbar-Styling für Webkit-Browser (Chrome, Safari) */
-            &::-webkit-scrollbar {
-                width: 10px;
-            }
-            
-            &::-webkit-scrollbar-track {
-                background: #f1f1f1;
-                border-radius: 10px;
-            }
-            
-            &::-webkit-scrollbar-thumb {
-                background: var(--primary-color);
-                border-radius: 10px;
-            }
-            
-            &::-webkit-scrollbar-thumb:hover {
-                background: var(--primary-light);
-            }
-            
-            /* Scrollbar-Styling für Firefox */
-            scrollbar-width: thin;
-            scrollbar-color: var(--primary-color) #f1f1f1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
         }
         
-        #pdfContainer canvas {
-            margin: 0 auto;
-            display: block;
+        /* Deutliche Scrollbar für Webkit-Browser (Chrome, Safari) */
+        #pdfContainer::-webkit-scrollbar {
+            width: 16px; /* Breitere Scrollbar */
+            background-color: var(--scrollbar-bg);
+        }
+        
+        #pdfContainer::-webkit-scrollbar-track {
+            background: var(--scrollbar-bg);
+            border-radius: 8px;
+        }
+        
+        #pdfContainer::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 8px;
+            border: 3px solid var(--scrollbar-bg);
+        }
+        
+        #pdfContainer::-webkit-scrollbar-thumb:hover {
+            background: var(--scrollbar-thumb-hover);
+        }
+        
+        /* Firefox */
+        #pdfContainer {
+            scrollbar-width: auto; /* "auto" statt "thin" für breitere Scrollbar */
+            scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-bg);
+        }
+        
+        /* Scrollbar-Indikator für bessere Sichtbarkeit */
+        .scrollbar-indicator {
+            position: absolute;
+            right: 10px;
+            bottom: 20px;
+            background-color: rgba(35, 72, 137, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+        
+        #pdfViewer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        #pdfViewer canvas {
+            max-width: 100%;
+            height: auto !important;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
         
         .toolbar {
             background: var(--primary-color);
             border-radius: 12px 12px 0 0;
             flex-shrink: 0;
+            z-index: 10;
         }
         
         .toolbar button {
@@ -117,21 +165,14 @@
             border-color: var(--primary-color);
         }
         
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
-            transition: all 0.2s ease;
-        }
-        
-        .btn-primary:hover {
-            background-color: var(--primary-light);
-        }
-        
         /* Für Einbettung optimiert */
         .pdf-viewer-wrapper {
-            height: 600px; /* Feste Höhe für die Einbettung */
+            height: 700px; /* Erhöhte Höhe für bessere Sichtbarkeit */
             width: 100%;
             max-width: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
         }
         
         /* Beispiel für iframe-Einbettung */
@@ -149,6 +190,17 @@
             padding: 8px;
             border-radius: 4px;
             overflow-x: auto;
+        }
+        
+        /* Für die Anzeige mehrerer Seiten */
+        .pdf-page {
+            margin-bottom: 20px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .pdf-page:last-child {
+            margin-bottom: 0;
         }
     </style>
     <script>
@@ -177,8 +229,8 @@
         }
     </script>
 </head>
-<body class="min-h-screen p-4 md:p-8 flex flex-col">
-    <div class="max-w-5xl mx-auto w-full flex-grow flex flex-col">
+<body class="p-4 md:p-8">
+    <div class="max-w-5xl mx-auto w-full">
         <h1 class="text-2xl md:text-3xl font-bold text-primary-700 mb-4">Sicherer PDF-Viewer</h1>
         
         <div class="mb-4">
@@ -230,8 +282,8 @@
                     </div>
                 </div>
                 
-                <div id="pdfContainer" class="p-4">
-                    <div id="pdfViewer" class="mx-auto">
+                <div id="pdfContainer">
+                    <div id="pdfViewer">
                         <div class="flex flex-col items-center justify-center h-64 text-primary-500">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -240,6 +292,14 @@
                             <p class="text-sm mt-2">Verwenden Sie den Datei-Auswahldialog oben</p>
                         </div>
                     </div>
+                </div>
+                
+                <!-- Scrollbar-Indikator -->
+                <div class="scrollbar-indicator">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                    <span>Scrollen</span>
                 </div>
             </div>
         </div>
@@ -251,7 +311,7 @@
         <div class="embed-example mt-6">
             <h2 class="text-lg font-semibold text-primary-700 mb-2">So betten Sie diesen PDF-Viewer in Ihre Website ein:</h2>
             <div class="embed-code">
-                &lt;iframe src="pfad-zur-pdf-viewer.html" width="100%" height="600" style="border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" title="PDF Viewer"&gt;&lt;/iframe&gt;
+                &lt;iframe src="pfad-zur-pdf-viewer.html" width="100%" height="700" style="border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" title="PDF Viewer"&gt;&lt;/iframe&gt;
             </div>
             <p class="text-sm text-primary-600 mt-2">Speichern Sie den gesamten Code in einer HTML-Datei und verwenden Sie den obigen iframe-Code, um ihn in Ihre Website einzubetten.</p>
         </div>
@@ -266,21 +326,29 @@
         let pageRendering = false;
         let pageNumPending = null;
         let scale = 1.0;
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
         const pdfViewer = document.getElementById('pdfViewer');
+        const scrollIndicator = document.querySelector('.scrollbar-indicator');
         
         // PDF laden
         const loadPdf = async (url) => {
             try {
                 // Leere den pdfViewer
                 pdfViewer.innerHTML = '';
-                pdfViewer.appendChild(canvas);
                 
+                // Lade das PDF-Dokument
                 pdfDoc = await pdfjsLib.getDocument(url).promise;
                 document.getElementById('totalPages').textContent = pdfDoc.numPages;
                 pageNum = 1; // Zurück zur ersten Seite
+                
+                // Rendere die aktuelle Seite
                 renderPage(pageNum);
+                
+                // Zeige den Scroll-Indikator für 5 Sekunden an
+                scrollIndicator.style.display = 'flex';
+                setTimeout(() => {
+                    scrollIndicator.style.display = 'none';
+                }, 5000);
+                
             } catch (error) {
                 console.error('Fehler beim Laden des PDFs:', error);
                 pdfViewer.innerHTML = `
@@ -293,42 +361,68 @@
         };
         
         // Seite rendern
-        const renderPage = (num) => {
+        const renderPage = async (num) => {
             pageRendering = true;
             
-            pdfDoc.getPage(num).then((page) => {
-                // Berechne die Skalierung basierend auf der Container-Breite
+            try {
+                const page = await pdfDoc.getPage(num);
+                
+                // Berechne die optimale Skalierung basierend auf der Container-Breite
                 const pdfContainer = document.getElementById('pdfContainer');
                 const containerWidth = pdfContainer.clientWidth - 40; // Abzüglich Padding
-                const viewport = page.getViewport({ scale: 1 });
                 
-                // Passe die Skalierung an, um die Seite in den Container zu passen
+                // Erstelle ein neues Canvas für diese Seite
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Berechne die Skalierung, um die Seite in den Container zu passen
+                const viewport = page.getViewport({ scale: 1 });
                 const containerScale = containerWidth / viewport.width;
                 const finalScale = scale * containerScale;
                 
+                // Setze die Viewport-Größe mit der berechneten Skalierung
                 const scaledViewport = page.getViewport({ scale: finalScale });
                 
+                // Setze die Canvas-Größe entsprechend der skalierten Viewport-Größe
                 canvas.height = scaledViewport.height;
                 canvas.width = scaledViewport.width;
+                canvas.classList.add('pdf-page');
                 
+                // Füge das Canvas zum Viewer hinzu
+                pdfViewer.appendChild(canvas);
+                
+                // Rendere die Seite auf das Canvas
                 const renderContext = {
                     canvasContext: ctx,
                     viewport: scaledViewport
                 };
                 
-                const renderTask = page.render(renderContext);
+                await page.render(renderContext).promise;
                 
-                renderTask.promise.then(() => {
-                    pageRendering = false;
-                    
-                    if (pageNumPending !== null) {
-                        renderPage(pageNumPending);
-                        pageNumPending = null;
-                    }
-                });
-            });
-            
-            document.getElementById('currentPage').textContent = num;
+                pageRendering = false;
+                
+                if (pageNumPending !== null) {
+                    renderPage(pageNumPending);
+                    pageNumPending = null;
+                }
+                
+                // Aktualisiere die Seitenanzeige
+                document.getElementById('currentPage').textContent = num;
+                
+                // Scrolle zum Anfang der Seite, wenn eine neue Seite geladen wird
+                pdfContainer.scrollTop = 0;
+                
+                // Füge einen künstlichen Inhalt hinzu, um sicherzustellen, dass die Scrollbar immer sichtbar ist
+                if (pdfDoc.numPages === 1 && canvas.height < pdfContainer.clientHeight) {
+                    const spacer = document.createElement('div');
+                    spacer.style.height = '100px';
+                    pdfViewer.appendChild(spacer);
+                }
+                
+            } catch (error) {
+                console.error('Fehler beim Rendern der Seite:', error);
+                pageRendering = false;
+            }
         };
         
         // Vorherige Seite anzeigen
@@ -354,6 +448,8 @@
             if (pageRendering) {
                 pageNumPending = num;
             } else {
+                // Leere den pdfViewer vor dem Rendern einer neuen Seite
+                pdfViewer.innerHTML = '';
                 renderPage(num);
             }
         };
@@ -363,6 +459,9 @@
             if (!pdfDoc) return;
             scale += 0.25;
             if (scale > 3) scale = 3;
+            
+            // Leere den pdfViewer vor dem Rendern mit neuer Skalierung
+            pdfViewer.innerHTML = '';
             renderPage(pageNum);
         };
         
@@ -370,12 +469,18 @@
             if (!pdfDoc) return;
             scale -= 0.25;
             if (scale < 0.5) scale = 0.5;
+            
+            // Leere den pdfViewer vor dem Rendern mit neuer Skalierung
+            pdfViewer.innerHTML = '';
             renderPage(pageNum);
         };
         
         const zoomReset = () => {
             if (!pdfDoc) return;
             scale = 1.0;
+            
+            // Leere den pdfViewer vor dem Rendern mit neuer Skalierung
+            pdfViewer.innerHTML = '';
             renderPage(pageNum);
         };
         
@@ -424,9 +529,16 @@
         // Größenanpassung bei Änderung der Fenstergröße
         window.addEventListener('resize', () => {
             if (pdfDoc) {
+                // Leere den pdfViewer vor dem Rendern mit neuer Fenstergröße
+                pdfViewer.innerHTML = '';
                 renderPage(pageNum);
             }
         });
+        
+        // Verstecke den Scroll-Indikator beim Scrollen
+        document.getElementById('pdfContainer').addEventListener('scroll', () => {
+            scrollIndicator.style.display = 'none';
+        });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'94221a9d95829732',t:'MTc0NzY0MjA4MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'94223784d276b044',t:'MTc0NzY0MzI2NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

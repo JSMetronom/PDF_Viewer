@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -21,6 +20,8 @@
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--primary-bg);
+            margin: 0;
+            padding: 0;
         }
         
         #viewerContainer {
@@ -29,12 +30,37 @@
             background-color: #ffffff;
             box-shadow: 0 10px 25px rgba(35, 72, 137, 0.15);
             border-radius: 12px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
         }
         
         #pdfContainer {
-            overflow: auto;
+            overflow-y: auto;
             background-color: var(--primary-bg);
-            transition: transform 0.3s ease;
+            flex-grow: 1;
+            /* Scrollbar-Styling für Webkit-Browser (Chrome, Safari) */
+            &::-webkit-scrollbar {
+                width: 10px;
+            }
+            
+            &::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 10px;
+            }
+            
+            &::-webkit-scrollbar-thumb {
+                background: var(--primary-color);
+                border-radius: 10px;
+            }
+            
+            &::-webkit-scrollbar-thumb:hover {
+                background: var(--primary-light);
+            }
+            
+            /* Scrollbar-Styling für Firefox */
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-color) #f1f1f1;
         }
         
         #pdfContainer canvas {
@@ -45,6 +71,7 @@
         .toolbar {
             background: var(--primary-color);
             border-radius: 12px 12px 0 0;
+            flex-shrink: 0;
         }
         
         .toolbar button {
@@ -99,6 +126,30 @@
         .btn-primary:hover {
             background-color: var(--primary-light);
         }
+        
+        /* Für Einbettung optimiert */
+        .pdf-viewer-wrapper {
+            height: 600px; /* Feste Höhe für die Einbettung */
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        /* Beispiel für iframe-Einbettung */
+        .embed-example {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 16px;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .embed-code {
+            font-family: monospace;
+            background-color: #fff;
+            padding: 8px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
     </style>
     <script>
         tailwind.config = {
@@ -143,49 +194,51 @@
             </div>
         </div>
         
-        <div id="viewerContainer" class="flex-grow flex flex-col">
-            <div class="toolbar p-3 md:p-4 flex flex-wrap items-center justify-between gap-2 text-white">
-                <div class="flex items-center gap-2">
-                    <button id="zoomIn" class="p-2 rounded-lg flex items-center justify-center" title="Vergrößern">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
-                        </svg>
-                    </button>
-                    <button id="zoomOut" class="p-2 rounded-lg flex items-center justify-center" title="Verkleinern">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" />
-                        </svg>
-                    </button>
-                    <button id="zoomReset" class="p-2 rounded-lg flex items-center justify-center" title="Zurücksetzen">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                    </button>
+        <div class="pdf-viewer-wrapper">
+            <div id="viewerContainer" class="h-full">
+                <div class="toolbar p-3 md:p-4 flex flex-wrap items-center justify-between gap-2 text-white">
+                    <div class="flex items-center gap-2">
+                        <button id="zoomIn" class="p-2 rounded-lg flex items-center justify-center" title="Vergrößern">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
+                            </svg>
+                        </button>
+                        <button id="zoomOut" class="p-2 rounded-lg flex items-center justify-center" title="Verkleinern">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" />
+                            </svg>
+                        </button>
+                        <button id="zoomReset" class="p-2 rounded-lg flex items-center justify-center" title="Zurücksetzen">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div class="page-controls px-3 py-1 flex items-center gap-2">
+                        <button id="prevPage" class="p-1 rounded-lg flex items-center justify-center text-primary-700" title="Vorherige Seite">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+                        <span id="pageInfo" class="text-sm font-medium text-primary-700">Seite <span id="currentPage">1</span> von <span id="totalPages">1</span></span>
+                        <button id="nextPage" class="p-1 rounded-lg flex items-center justify-center text-primary-700" title="Nächste Seite">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 
-                <div class="page-controls px-3 py-1 flex items-center gap-2">
-                    <button id="prevPage" class="p-1 rounded-lg flex items-center justify-center text-primary-700" title="Vorherige Seite">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                        </svg>
-                    </button>
-                    <span id="pageInfo" class="text-sm font-medium text-primary-700">Seite <span id="currentPage">1</span> von <span id="totalPages">1</span></span>
-                    <button id="nextPage" class="p-1 rounded-lg flex items-center justify-center text-primary-700" title="Nächste Seite">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
-            
-            <div id="pdfContainer" class="flex-grow p-4">
-                <div id="pdfViewer" class="mx-auto">
-                    <div class="flex flex-col items-center justify-center h-64 text-primary-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <p class="text-lg font-medium">Bitte wählen Sie eine PDF-Datei aus</p>
-                        <p class="text-sm mt-2">Verwenden Sie den Datei-Auswahldialog oben</p>
+                <div id="pdfContainer" class="p-4">
+                    <div id="pdfViewer" class="mx-auto">
+                        <div class="flex flex-col items-center justify-center h-64 text-primary-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <p class="text-lg font-medium">Bitte wählen Sie eine PDF-Datei aus</p>
+                            <p class="text-sm mt-2">Verwenden Sie den Datei-Auswahldialog oben</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -193,6 +246,14 @@
         
         <div class="mt-4 text-sm text-primary-600 text-center">
             Dieser PDF-Viewer verhindert das Kopieren, Herunterladen und Drucken von Dokumenten.
+        </div>
+        
+        <div class="embed-example mt-6">
+            <h2 class="text-lg font-semibold text-primary-700 mb-2">So betten Sie diesen PDF-Viewer in Ihre Website ein:</h2>
+            <div class="embed-code">
+                &lt;iframe src="pfad-zur-pdf-viewer.html" width="100%" height="600" style="border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" title="PDF Viewer"&gt;&lt;/iframe&gt;
+            </div>
+            <p class="text-sm text-primary-600 mt-2">Speichern Sie den gesamten Code in einer HTML-Datei und verwenden Sie den obigen iframe-Code, um ihn in Ihre Website einzubetten.</p>
         </div>
     </div>
 
@@ -236,13 +297,23 @@
             pageRendering = true;
             
             pdfDoc.getPage(num).then((page) => {
-                const viewport = page.getViewport({ scale });
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
+                // Berechne die Skalierung basierend auf der Container-Breite
+                const pdfContainer = document.getElementById('pdfContainer');
+                const containerWidth = pdfContainer.clientWidth - 40; // Abzüglich Padding
+                const viewport = page.getViewport({ scale: 1 });
+                
+                // Passe die Skalierung an, um die Seite in den Container zu passen
+                const containerScale = containerWidth / viewport.width;
+                const finalScale = scale * containerScale;
+                
+                const scaledViewport = page.getViewport({ scale: finalScale });
+                
+                canvas.height = scaledViewport.height;
+                canvas.width = scaledViewport.width;
                 
                 const renderContext = {
                     canvasContext: ctx,
-                    viewport: viewport
+                    viewport: scaledViewport
                 };
                 
                 const renderTask = page.render(renderContext);
@@ -349,6 +420,13 @@
             e.preventDefault();
             return false;
         });
+        
+        // Größenanpassung bei Änderung der Fenstergröße
+        window.addEventListener('resize', () => {
+            if (pdfDoc) {
+                renderPage(pageNum);
+            }
+        });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9421f4de10fbdcc1',t:'MTc0NzY0MDUzNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'94221a9d95829732',t:'MTc0NzY0MjA4MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
